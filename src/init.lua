@@ -135,10 +135,11 @@ function _G.class(name, table, options)
     options = options or {}
 
     ---@type class-system.create.options
-    local createOptions = {}
-    createOptions.name = name
-    createOptions.is_abstract = options.is_abstract
-    createOptions.inherit = options.inherit
+    local createOptions = {
+        name = name,
+        is_abstract = options.is_abstract,
+        inherit = options.inherit,
+    }
 
     return class_system.create(table, createOptions)
 end
@@ -152,10 +153,11 @@ function _G.interface(name, table, options)
     options = options or {}
 
     ---@type class-system.create.options
-    local createOptions = {}
-    createOptions.name = name
-    createOptions.is_interface = true
-    createOptions.inherit = options.inherit
+    local createOptions = {
+        name = name,
+        is_interface = true,
+        inherit = options.inherit,
+    }
 
     return class_system.create(table, createOptions)
 end

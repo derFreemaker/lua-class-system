@@ -8,7 +8,6 @@
     "Lua.diagnostics.ignoredFiles": "Disable",
     "Lua.workspace.ignoreDir": [
         ".vscode",
-		"**/tools/Freemaker/src",
 		"class_system.lua"
 	],
     "Lua.diagnostics.globals": [
