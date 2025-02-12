@@ -1972,19 +1972,23 @@ __bundler__.__files__["src.construction"] = function()
 	        setmetatable(obj, metatable)
 	    end
 
+	    local base_constructed = false
 	    if type_info.base then
 	        if type_info.base.has_constructor then
 	            function super(...)
 	                constructMembers()
 	                construction_handler.construct(type_info.base, obj, instance, metatable, ...)
+	                base_constructed = true
 	                return obj
 	            end
 	        else
 	            constructMembers()
 	            construction_handler.construct(type_info.base, obj, instance, metatable)
+	            base_constructed = true
 	        end
 	    else
 	        constructMembers()
+	        base_constructed = true
 	    end
 
 	    if type_info.has_constructor then
@@ -1993,6 +1997,10 @@ __bundler__.__files__["src.construction"] = function()
 	        else
 	            type_info.meta_methods.__init(obj, ...)
 	        end
+	    end
+
+	    if not base_constructed then
+	        error("'" .. type_info.name ..  "' constructor did not invoke '" .. type_info.base.name .. "' (base) constructor")
 	    end
 
 	    instance.is_constructed = true
