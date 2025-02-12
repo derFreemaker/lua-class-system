@@ -2,7 +2,7 @@
 
 Class System in pure lua.
 
-Works in lua `5.3`.
+Works in lua `5.3+`.
 
 The [Samples](https://github.com/derFreemaker/ClassSystem/tree/master/samples) also act as Documentation.
 
