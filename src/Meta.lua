@@ -131,7 +131,7 @@
 ----------------------------------------------------------------
 
 ---@class class-system.create.options : class-system.type.options
----@field name string | nil
+---@field name string
 ---
 ---@field inherit object[] | object | nil
 

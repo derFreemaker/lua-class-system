@@ -57,4 +57,28 @@ function TestDeconstructClass()
         error_because_of_deconstructed_class)
 end
 
+function TestPreConstructor()
+    local uniqe_value = {}
+
+    local test_class = class_system.create({
+        __preinit = function()
+            return uniqe_value
+        end
+    }, { name = "test_class" })
+
+    luaunit.assertIsTrue(test_class() == uniqe_value, "did not return expected object from '__preinit'")
+end
+
+function TestNotCallingBaseConstructor()
+    local base_class = class_system.create({
+        __init = function()
+            error("constructor called")
+        end
+    }, { name = "base_class" })
+
+    local test_class = class_system.create({}, { name = "test_class", inherit = base_class })
+
+    luaunit.assertErrorMsgMatches(".*: '[a-z._]*' constructor did not invoke '[a-z._]*' %(base%) constructor", test_class)
+end
+
 os.exit(luaunit.LuaUnit.run())

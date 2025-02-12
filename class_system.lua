@@ -282,7 +282,7 @@ __bundler__.__files__["src.meta"] = function()
 	----------------------------------------------------------------
 
 	---@class class-system.create.options : class-system.type.options
-	---@field name string | nil
+	---@field name string
 	---
 	---@field inherit object[] | object | nil
 
@@ -1373,13 +1373,14 @@ __bundler__.__files__["src.members"] = function()
 
 	---@param type_info class-system.type
 	function members_handler.update_state(type_info)
-	    local metaMethods = type_info.meta_methods
+	    local meta_methods = type_info.meta_methods
 
-	    type_info.has_constructor = metaMethods.__init ~= nil
-	    type_info.has_deconstructor = metaMethods.__gc ~= nil
-	    type_info.has_close = metaMethods.__close ~= nil
-	    type_info.has_index = metaMethods.__index ~= nil
-	    type_info.has_new_index = metaMethods.__newindex ~= nil
+	    type_info.has_pre_constructor = meta_methods.__preinit ~= nil
+	    type_info.has_constructor = meta_methods.__init ~= nil
+	    type_info.has_deconstructor = meta_methods.__gc ~= nil
+	    type_info.has_close = meta_methods.__close ~= nil
+	    type_info.has_index = meta_methods.__index ~= nil
+	    type_info.has_new_index = meta_methods.__newindex ~= nil
 	end
 
 	---@param type_info class-system.type
@@ -2171,10 +2172,11 @@ __bundler__.__files__["__main__"] = function()
 	    options = options or {}
 
 	    ---@type class-system.create.options
-	    local createOptions = {}
-	    createOptions.name = name
-	    createOptions.is_abstract = options.is_abstract
-	    createOptions.inherit = options.inherit
+	    local createOptions = {
+	        name = name,
+	        is_abstract = options.is_abstract,
+	        inherit = options.inherit,
+	    }
 
 	    return class_system.create(table, createOptions)
 	end
@@ -2188,10 +2190,11 @@ __bundler__.__files__["__main__"] = function()
 	    options = options or {}
 
 	    ---@type class-system.create.options
-	    local createOptions = {}
-	    createOptions.name = name
-	    createOptions.is_interface = true
-	    createOptions.inherit = options.inherit
+	    local createOptions = {
+	        name = name,
+	        is_interface = true,
+	        inherit = options.inherit,
+	    }
 
 	    return class_system.create(table, createOptions)
 	end
