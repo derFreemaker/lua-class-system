@@ -3,12 +3,9 @@
   "runtime.version": "Lua 5.3",
   "runtime.pathStrict": true,
   "runtime.path": ["?.lua"],
-  "Lua.diagnostics.ignoredFiles": "Disable",
-  "Lua.diagnostics.globals": [],
   "workspace.library": [
     "${addons}/luassert/module/library",
     "${addons}/busted/module/library",
     "${3rd}/luassert/library"
-  ],
-  "workspace.checkThirdParty": false
+  ]
 }
