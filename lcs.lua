@@ -1,12 +1,5 @@
-----------------------------------------------------------------
--- config
-----------------------------------------------------------------
-
----@class lcs.config
-local config = {}
-
----@enum lcs.config.meta_type
-config.meta_type = {
+---@enum lcs.meta_type
+local meta_type = {
     pre_constructor = {},
     constructor = {},
     index = {},
@@ -38,57 +31,54 @@ config.meta_type = {
     lower_equal = {},
 }
 
+----------------------------------------------------------------
+-- config
+----------------------------------------------------------------
+
+---@class lcs.config
+local config = {}
+
 -- to deactivate a meta_methods, comment it out
 
----@type table<string, lcs.config.meta_type>
+---@type table<string, lcs.meta_type>
 config.meta = {
-    ["__gc"] = config.meta_type.gc,
+    ["__pre"] = meta_type.pre_constructor,
+    ["__init"] = meta_type.constructor,
+    ["__index"] = meta_type.index,
+    ["__newindex"] = meta_type.new_index,
+    ["__gc"] = meta_type.gc,
     -- Lua >=5.4
-    ["__close"] = config.meta_type.close,
-    ["__call"] = config.meta_type.call,
-    ["__pairs"] = config.meta_type.pairs,
-    ["__tostring"] = config.meta_type.to_string,
+    ["__close"] = meta_type.close,
+    ["__call"] = meta_type.call,
+    ["__pairs"] = meta_type.pairs,
+    ["__tostring"] = meta_type.to_string,
 
     -- operators
-    ["__add"] = config.meta_type.add,
-    ["__sub"] = config.meta_type.sub,
-    ["__mul"] = config.meta_type.mul,
-    ["__div"] = config.meta_type.div,
-    ["__mod"] = config.meta_type.mod,
-    ["__pow"] = config.meta_type.pow,
-    ["__unm"] = config.meta_type.neg,
-    ["__idiv"] = config.meta_type.floor_div,
-    ["__band"] = config.meta_type.bit_and,
-    ["__bor"] = config.meta_type.bit_or,
-    ["__bxor"] = config.meta_type.bit_xor,
-    ["__bnot"] = config.meta_type.bit_not,
-    ["__shl"] = config.meta_type.bit_shift_left,
-    ["__shr"] = config.meta_type.bit_shift_right,
-    ["__concat"] = config.meta_type.concat,
-    ["__len"] = config.meta_type.len,
-    ["__eq"] = config.meta_type.equal,
-    ["__lt"] = config.meta_type.lower_than,
-    ["__le"] = config.meta_type.lower_equal,
+    ["__add"] = meta_type.add,
+    ["__sub"] = meta_type.sub,
+    ["__mul"] = meta_type.mul,
+    ["__div"] = meta_type.div,
+    ["__mod"] = meta_type.mod,
+    ["__pow"] = meta_type.pow,
+    ["__unm"] = meta_type.neg,
+    ["__idiv"] = meta_type.floor_div,
+    ["__band"] = meta_type.bit_and,
+    ["__bor"] = meta_type.bit_or,
+    ["__bxor"] = meta_type.bit_xor,
+    ["__bnot"] = meta_type.bit_not,
+    ["__shl"] = meta_type.bit_shift_left,
+    ["__shr"] = meta_type.bit_shift_right,
+    ["__concat"] = meta_type.concat,
+    ["__len"] = meta_type.len,
+    ["__eq"] = meta_type.equal,
+    ["__lt"] = meta_type.lower_than,
+    ["__le"] = meta_type.lower_equal,
 }
 
----@type table<string, lcs.config.meta_type>
-config.indirect_meta = {
-    ["__pre"] = config.meta_type.pre_constructor,
-    ["__init"] = config.meta_type.constructor,
-    ["__index"] = config.meta_type.index,
-    ["__newindex"] = config.meta_type.new_index,
-}
-
----@type table<lcs.config.meta_type, string>
-config.reverse_meta = {}
+---@type table<lcs.meta_type, string>
+config.meta_name = {}
 for name, meta in pairs(config.meta) do
-    config.reverse_meta[meta] = name
-end
-
----@type table<lcs.config.meta_type, string>
-config.reverse_indirect_meta = {}
-for name, meta in pairs(config.indirect_meta) do
-    config.reverse_indirect_meta[meta] = name
+    config.meta_name[meta] = name
 end
 
 ----------------------------------------------------------------
@@ -109,8 +99,7 @@ end
 ---@field has_pre_constructor boolean
 ---@field has_constructor boolean
 ---
----@field meta table<lcs.config.meta_type, any>
----@field indirect_meta table<lcs.config.meta_type, any>
+---@field meta table<lcs.meta_type, any>
 ---
 ---@field members table<any, any>
 
@@ -122,27 +111,6 @@ local LCS = {
 
 ---@type unknown
 LCS.unique_type_key = {}
-
----@param tbl lcs.class
----@param type_info lcs.type
----@param interfaces lcs.type[]
-local function check_interfaces(tbl, type_info, interfaces)
-    for _, interface in ipairs(interfaces) do
-        for _, name in pairs(interface.interfacing_methods) do
-            if tbl[name] == nil then
-                error(("interface method '%s' not implemented in class '%s' from interface '%s'"):format(name, type_info.name, interface.name))
-            end
-        end
-
-        for key in pairs(interface.members) do
-            if tbl[key] ~= nil then
-                error(("overriding member '%s' in class '%s' from interface '%s' is not allowed"):format(key, type_info.name, interface.name))
-            end
-        end
-
-        check_interfaces(tbl, type_info, interface.interfaces)
-    end
-end
 
 ---@param instance lcs.class
 ---@param interfaces lcs.type[]
@@ -158,14 +126,98 @@ end
 
 ---@param key any
 ---@param interfaces lcs.type[]
+---@return any?, lcs.type?
 local function index_members_interfaces(key, interfaces)
     for _, interface in ipairs(interfaces) do
         local value = interface.members[key]
         if value ~= nil then
-            return value
+            return value, interface
         end
 
-        return index_members_interfaces(key, interface.interfaces)
+        local i_value, from_interface = index_members_interfaces(key, interface.interfaces)
+        if i_value ~= nil then
+            return i_value, from_interface
+        end
+    end
+end
+
+---@param type_info lcs.type
+---@param interface lcs.type
+---@return boolean
+local function has_interface(type_info, interface)
+    assert(interface.is_interface, "expected interface")
+
+    for _, inter in ipairs(type_info.interfaces) do
+        if inter == interface then
+            return true
+        end
+
+        if has_interface(inter, interface) then
+            return true
+        end
+    end
+
+    return false
+end
+
+---@param name string
+---@param type_info lcs.type
+---@param interface lcs.type
+local function check_malformed_interface_structure(name, type_info, interface)
+    local value, from_interface = index_members_interfaces(name, type_info.interfaces)
+    if value ~= nil then
+        ---@cast from_interface -nil
+
+        if not has_interface(from_interface, interface) then
+            error(("implementing method '%s' from interface '%s' which doesn't implement interface '%s'"):format(
+                name, from_interface.name, interface.name))
+        end
+    end
+end
+
+---@param tbl lcs.interface
+---@param type_info lcs.type
+---@param interfaces lcs.type[]
+local function interface_check_interfaces(tbl, type_info, interfaces)
+    for _, interface in ipairs(interfaces) do
+        for _, name in ipairs(interface.interfacing_methods) do
+            if tbl[name] ~= nil then
+                goto continue
+            end
+            check_malformed_interface_structure(name, type_info, interface)
+
+            ::continue::
+        end
+
+        interface_check_interfaces(tbl, type_info, interface.interfaces)
+    end
+end
+
+---@param tbl lcs.class
+---@param type_info lcs.type
+---@param interfaces lcs.type[]
+local function class_check_interfaces(tbl, type_info, interfaces)
+    for _, interface in ipairs(interfaces) do
+        for _, name in ipairs(interface.interfacing_methods) do
+            if tbl[name] ~= nil then
+                goto continue
+            end
+            check_malformed_interface_structure(name, type_info, interface)
+
+            error(("interface method '%s' not implemented in class '%s' from interface '%s'"):format(name,
+                type_info.name, interface.name))
+
+            ::continue::
+        end
+
+        for key in pairs(interface.members) do
+            if tbl[key] ~= nil then
+                error(("overriding member '%s' in class '%s' from interface '%s' is not allowed"):format(key,
+                    type_info.name, interface.name))
+            end
+        end
+
+        class_check_interfaces(tbl, type_info, interface.interfaces)
     end
 end
 
@@ -190,11 +242,10 @@ local function create_type(tbl, options)
         is_interface = options.is_interface or false,
         interfacing_methods = options.interfacing_methods,
 
-        has_pre_constructor = tbl[config.reverse_indirect_meta[config.meta_type.pre_constructor]] ~= nil,
-        has_constructor = tbl[config.reverse_indirect_meta[config.meta_type.constructor]] ~= nil,
+        has_pre_constructor = tbl[config.meta_name[meta_type.pre_constructor]] ~= nil,
+        has_constructor = tbl[config.meta_name[meta_type.constructor]] ~= nil,
 
         meta = {},
-        indirect_meta = {},
 
         members = {},
     }
@@ -207,9 +258,11 @@ local function create_type(tbl, options)
             end
             tbl[interfacing_method_name] = nil
         end
+
+        interface_check_interfaces(tbl, type_info, options.interfaces)
     else
         if #options.interfaces > 0 then
-            check_interfaces(tbl, type_info, options.interfaces)
+            class_check_interfaces(tbl, type_info, options.interfaces)
         end
     end
 
@@ -219,20 +272,10 @@ local function create_type(tbl, options)
         local meta = config.meta[key]
         if meta ~= nil then
             if type_info.is_interface then
-                error(("cannot add meta method '%s' to interface '%s'"):format(key, type_info.name))
+                error(("cannot add meta method '%s' to an interface '%s'"):format(key, type_info.name))
             end
 
             type_info.meta[meta] = value
-            goto continue
-        end
-
-        local indirect_meta = config.indirect_meta[key]
-        if indirect_meta ~= nil then
-            if type_info.is_interface then
-                error(("cannot add indirect meta method '%s' to interface '%s'"):format(key, type_info.name))
-            end
-
-            type_info.indirect_meta[indirect_meta] = value
             goto continue
         end
 
@@ -240,7 +283,16 @@ local function create_type(tbl, options)
         ::continue::
     end
 
-    return type_info
+    return setmetatable(type_info, {
+        __metatable = {},
+        __newindex = function()
+            error("type information is a sealed table")
+        end,
+
+        __tostring = function()
+            return ("type(%s)"):format(type_info.name)
+        end,
+    })
 end
 
 ---@param type_info lcs.type
@@ -253,9 +305,9 @@ local function constructor(type_info)
 
         if type_info.has_pre_constructor then
             local pre_constructor =
-                type_info.indirect_meta[config.meta_type.pre_constructor]
-            local result = pre_constructor(get_args(...))
-            if result ~= nil then
+                type_info.meta[meta_type.pre_constructor]
+            local skip, result = pre_constructor(get_args(...))
+            if skip then
                 return result
             end
         end
@@ -264,13 +316,13 @@ local function constructor(type_info)
         setmetatable(instance, mt)
         mt[LCS.unique_type_key] = type_info
 
-        mt.__tostring = type_info.meta[config.meta_type.to_string] or
+        mt.__tostring = type_info.meta[meta_type.to_string] or
             function()
-                return ("class: %s"):format(type_info.name)
+                return ("class(%s)"):format(type_info.name)
             end
 
         for meta, value in pairs(type_info.meta) do
-            mt[config.reverse_meta[meta]] = value
+            mt[config.meta_name[meta]] = value
         end
 
         for key, method in pairs(type_info.members) do
@@ -280,7 +332,7 @@ local function constructor(type_info)
         add_interfaces(instance, type_info.interfaces)
 
         if type_info.has_constructor then
-            type_info.indirect_meta[config.meta_type.constructor](instance, get_args(...))
+            type_info.meta[meta_type.constructor](instance, get_args(...))
         end
 
         return instance
@@ -308,17 +360,21 @@ local function make_template(tbl, type_info)
         error(("cannot set value '%s' in class template '%s'"):format(key, type_info.name))
     end
 
-    if not type_info.is_interface then
+    if type_info.is_interface then
+        mt.__call = function()
+            error(("cannot construct interface '%s'"):format(type_info.name))
+        end
+    else
         mt.__call = constructor(type_info)
     end
 
     if type_info.is_interface then
         function mt:__tostring()
-            return ("interface: %s"):format(type_info.name)
+            return ("interface(%s)"):format(type_info.name)
         end
     else
         function mt:__tostring()
-            return ("template: %s"):format(type_info.name)
+            return ("template(%s)"):format(type_info.name)
         end
     end
 
