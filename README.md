@@ -62,5 +62,4 @@ All meta method/value names can be configured.
 
 ## Third Party (only for testing)
 
-- [LuaAssert](https://github.com/Olivine-Labs/luassert)
 - [busted](https://github.com/Olivine-Labs/busted)
