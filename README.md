@@ -11,13 +11,15 @@ Works in lua `5.3+`.
 - Class
 - Interface
 - optional Constructor
-- Meta values
+- Meta values (configurable names)
 
 ## TODO
 
 - Performance improvements
 
-## Usage
+## Basic Usage
+
+More in [examples](examples)
 
 ```lua
 local lcs = require('lcs')
@@ -55,10 +57,6 @@ lcs.class(class, "Class", interface)
 local instance = class("Hello")
 instance:print_greet()
 ```
-
-### NOTE
-
-All meta method/value names can be configured.
 
 ## Third Party (only for testing)
 
