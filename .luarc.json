@@ -1,14 +1,14 @@
 {
   "$schema": "https://raw.githubusercontent.com/LuaLS/vscode-lua/master/setting/schema.json",
-  "runtime.version": "Lua 5.4",
+  "runtime.version": "Lua 5.3",
   "runtime.pathStrict": true,
   "runtime.path": ["?.lua"],
   "Lua.diagnostics.ignoredFiles": "Disable",
   "Lua.diagnostics.globals": [],
-    "workspace.library": [
-        "${addons}/luassert/module/library",
-        "${addons}/busted/module/library",
-        "${3rd}/luassert/library"
-    ],
-    "workspace.checkThirdParty": false
+  "workspace.library": [
+    "${addons}/luassert/module/library",
+    "${addons}/busted/module/library",
+    "${3rd}/luassert/library"
+  ],
+  "workspace.checkThirdParty": false
 }
