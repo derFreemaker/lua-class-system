@@ -49,7 +49,7 @@ function class:__init(name) -- constructor
 end
 
 function class:greet()
-    return "Hello"
+    return self.name
 end
 
 lcs.class(class, "Class", interface)
