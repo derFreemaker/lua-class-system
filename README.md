@@ -59,6 +59,6 @@ local instance = class("Hello")
 instance:print_greet()
 ```
 
-## Third Party (only for testing)
+## Dependecies (only for testing)
 
 - [busted](https://github.com/Olivine-Labs/busted)
