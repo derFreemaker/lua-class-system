@@ -142,9 +142,12 @@ context("class", function()
     end)
 
     test("implementing", function()
-        local interface = lcs.interface({
-            parent_method = function() end,
-        }, "interface", { "parent_method" })
+        local interface = {
+            parent_method = function()
+                return lcs.interface_method()
+            end,
+        }
+        lcs.interface(interface, "interface", { interface.parent_method })
 
         assert.has_error(function()
             lcs.class({}, "class", interface)
@@ -210,12 +213,15 @@ context("interface", function()
     end)
 
     test("implement", function()
-        local a = lcs.interface({
-            child = function() end,
+        local a = {
+            child = function()
+                return lcs.interface_method()
+            end,
             parent = function(self)
                 return self:child()
             end,
-        }, "a", { "child" })
+        }
+        lcs.interface(a, "a", { a.child })
 
         local b = lcs.interface({
             child = function()
@@ -226,18 +232,37 @@ context("interface", function()
         assert.equal(673, b:parent())
     end)
 
-    test("valid interface method", function()
+    test("invalid interface tbl", function()
         assert.has_error(function()
-            lcs.interface({
+            local interface = {
+                some = function()
+                    return lcs.interface_method()
+                end,
+            }
+
+            -- we disable it here since its intended to fail
+            ---@diagnostic disable-next-line: param-type-mismatch
+            lcs.interface(interface, "interface", 123)
+        end, "#3 expected table, got number")
+    end)
+
+    test("invalid interface method", function()
+        assert.has_error(function()
+            local interface = {
                 some = 123
-            }, "interface", { "some" })
-        end, "not a valid interface method found: 'some' in type 'interface'")
+            }
+
+            -- we disable it here since its intended to fail
+            ---@diagnostic disable-next-line: assign-type-mismatch
+            lcs.interface(interface, "interface", { interface.some })
+        end, "not a valid interface method found type: 'number' in type 'interface'")
     end)
 
     test("malformed interface structure", function()
-        local a = lcs.interface({
+        local a = {
             child = function() end,
-        }, "a", { "child" })
+        }
+        lcs.interface(a, "a", { a.child })
 
         local b = lcs.interface({
             child = function()

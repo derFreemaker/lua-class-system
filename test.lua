@@ -1,27 +1,3 @@
-# Lua Class System
-
-Class System in pure lua.
-
-Works in lua `5.3+`.
-
-`lcs.lua` is the only file you need.
-
-## Features
-
-- Class
-- Interface
-- optional Constructor
-- Meta values (configurable names)
-
-## TODO
-
-- Performance improvements
-
-## Basic Usage
-
-More in [examples](examples)
-
-```lua
 local lcs = require('lcs')
 
 ---@class Interface : lcs.interface
@@ -29,7 +5,7 @@ local interface = {}
 
 ---@return string
 function interface:greet()
-    return lcs.interface_method() -- to avoid type issues and throw an error if actually reached
+    return lcs.interface_method()
 end
 
 function interface:print_greet()
@@ -57,8 +33,3 @@ lcs.class(class, "Class", interface)
 
 local instance = class("Hello")
 instance:print_greet()
-```
-
-## Third Party (only for testing)
-
-- [busted](https://github.com/Olivine-Labs/busted)

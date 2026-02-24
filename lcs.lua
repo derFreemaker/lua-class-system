@@ -47,8 +47,7 @@ config.meta = {
     ["__index"] = meta_type.index,
     ["__newindex"] = meta_type.new_index,
     ["__gc"] = meta_type.gc,
-    -- Lua >=5.4
-    ["__close"] = meta_type.close,
+    ["__close"] = meta_type.close, -- Lua >=5.4
     ["__call"] = meta_type.call,
     ["__pairs"] = meta_type.pairs,
     ["__tostring"] = meta_type.to_string,
@@ -84,6 +83,8 @@ end
 ----------------------------------------------------------------
 -- config
 ----------------------------------------------------------------
+
+local table_insert = table.insert
 
 ---@class lcs.class : function
 
@@ -251,14 +252,6 @@ local function create_type(tbl, options)
     }
 
     if options.is_interface then
-        for _, interfacing_method_name in ipairs(type_info.interfacing_methods) do
-            if type(tbl[interfacing_method_name]) ~= "function" then
-                error(("not a valid interface method found: '%s' in type '%s'"):format(interfacing_method_name,
-                    type_info.name))
-            end
-            tbl[interfacing_method_name] = nil
-        end
-
         interface_check_interfaces(tbl, type_info, options.interfaces)
     else
         if #options.interfaces > 0 then
@@ -496,7 +489,7 @@ function LCS.class(tbl, name, ...)
         if not LCS.is_interface(interface) then
             error(("not a valid interface found: '%d' in type '%s'"):format(i, name))
         end
-        table.insert(opts.interfaces, LCS.typeof(interface))
+        table_insert(opts.interfaces, LCS.typeof(interface))
     end
 
     return LCS.create(tbl, opts)
@@ -505,12 +498,36 @@ end
 ---@generic T : lcs.interface
 ---@param tbl T
 ---@param name string
----@param interfacing_methods string[]?
+---@param interfacing_methods_ptr function[]?
 ---@param ... lcs.interface
 ---@return T
-function LCS.interface(tbl, name, interfacing_methods, ...)
+function LCS.interface(tbl, name, interfacing_methods_ptr, ...)
     assert(type(tbl) == "table", "#1 expected table, got " .. type(tbl))
     assert(type(name) == "string", "#2 expected string, got " .. type(name))
+    assert(not interfacing_methods_ptr or type(interfacing_methods_ptr) == "table",
+        "#3 expected table, got " .. type(interfacing_methods_ptr))
+
+    local interfacing_methods = {}
+    if interfacing_methods_ptr then
+        for _, func in ipairs(interfacing_methods_ptr) do
+            local func_type = type(func)
+            if func_type ~= "function" then
+                error(("not a valid interface method found type: '%s' in type '%s'"):format(func_type, name))
+            end
+        end
+
+        for member_name, member in pairs(tbl) do
+            if type(member) == "function" then
+                for _, func in ipairs(interfacing_methods_ptr) do
+                    if func == member then
+                        table_insert(interfacing_methods, member_name)
+                        tbl[member_name] = nil
+                        break
+                    end
+                end
+            end
+        end
+    end
 
     ---@type lcs.create.options
     local opts = {
@@ -526,10 +543,15 @@ function LCS.interface(tbl, name, interfacing_methods, ...)
         if not LCS.is_interface(interface) then
             error(("not a valid interface found: '%d' in type '%s'"):format(i, name))
         end
-        table.insert(opts.interfaces, LCS.typeof(interface))
+        table_insert(opts.interfaces, LCS.typeof(interface))
     end
 
     return LCS.create(tbl, opts)
+end
+
+---@return any
+function LCS.interface_method()
+    error("unreachable: unimplemented interface method")
 end
 
 return LCS
